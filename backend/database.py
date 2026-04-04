@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, JSON, DateTime, ARRAY, MetaData, Table
+from sqlalchemy import Column, Integer, String, JSON, DateTime, ARRAY
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
@@ -7,7 +7,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://dormchef:dormchef@localhost:5432/dormchef")
+# Use localhost for local Python backend connecting to Docker postgres
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://dormchef:dormchef@127.0.0.1:5432/dormchef"
+)
 
 engine = create_async_engine(
     DATABASE_URL,
