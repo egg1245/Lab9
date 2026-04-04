@@ -6,6 +6,32 @@
     <title>DormChef - Recipe Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --text-primary: #000000;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+            --header-bg: linear-gradient(to right, #f97316, #eab308);
+            --header-text: #ffffff;
+        }
+
+        body.dark-mode {
+            --bg-primary: #1f2937;
+            --bg-secondary: #111827;
+            --text-primary: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --header-bg: linear-gradient(to right, #7c2d12, #713f12);
+            --header-text: #fbbf24;
+        }
+
+        body {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
         .fade-in {
             animation: fadeIn 0.5s ease-in;
         }
@@ -26,9 +52,18 @@
     <div class="min-h-screen flex flex-col">
         <!-- Header -->
         <header class="bg-gradient-to-r from-orange-500 to-yellow-500 text-white shadow-lg">
-            <div class="max-w-4xl mx-auto px-4 py-6">
-                <h1 class="text-4xl font-bold">🍳 DormChef</h1>
-                <p class="text-orange-100 mt-2">Generate personalized recipes with your ingredients and appliances</p>
+            <div class="max-w-4xl mx-auto px-4 py-6 flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-bold">🍳 DormChef</h1>
+                    <p class="text-orange-100 mt-2">Generate personalized recipes with your ingredients and appliances</p>
+                </div>
+                <button 
+                    id="themeToggle" 
+                    class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition font-semibold text-lg"
+                    title="Toggle dark/light mode"
+                >
+                    🌙
+                </button>
             </div>
         </header>
 
@@ -366,6 +401,7 @@
         let editingApplianceId = null;
         let deletingApplianceId = null;
         let allAppliances = [];
+        let isDarkMode = localStorage.getItem('dormchef-dark-mode') === 'true';
 
         // DOM Elements - Generator
         const ingredientsInput = document.getElementById('ingredientsInput');
@@ -378,6 +414,7 @@
         const recipeContainer = document.getElementById('recipeContainer');
         const historyContainer = document.getElementById('historyContainer');
         const noHistoryMsg = document.getElementById('noHistoryMsg');
+        const themeToggle = document.getElementById('themeToggle');
         const selectedAppliances = new Set();
 
         // DOM Elements - Appliances Management
@@ -403,6 +440,36 @@
         // Event Listeners - Generator
         generateBtn.addEventListener('click', generateRecipe);
         document.getElementById('saveRecipeBtn').addEventListener('click', copyRecipe);
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // Event Listeners - Tabs
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', switchTab);
+        });
+
+        // ===== THEME MANAGEMENT =====
+
+        // Toggle Dark/Light Mode
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('dormchef-dark-mode', isDarkMode);
+            applyTheme();
+        }
+
+        // Apply Theme
+        function applyTheme() {
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark-mode');
+                document.body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
+                themeToggle.title = 'Switch to light mode';
+            } else {
+                document.documentElement.classList.remove('dark-mode');
+                document.body.classList.remove('dark-mode');
+                themeToggle.textContent = '🌙';
+                themeToggle.title = 'Switch to dark mode';
+            }
+        }
 
         // Event Listeners - Tabs
         tabButtons.forEach(btn => {
@@ -789,6 +856,7 @@
 
         // Initialize on page load
         async function initializePage() {
+            applyTheme();
             await loadAppliances();
             loadHistory();
         }
