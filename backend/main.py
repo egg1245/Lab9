@@ -147,7 +147,7 @@ async def get_recipes(
             RecipeResponse(
                 id=r.id,
                 ingredients=r.ingredients,
-                appliance=r.appliance,
+                appliances=[ApplianceResponse.from_orm(a) for a in r.appliances],
                 content=RecipeContent(**r.content),
                 created_at=r.created_at,
             )
