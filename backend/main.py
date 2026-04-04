@@ -150,7 +150,11 @@ async def get_recipes(
 @app.get("/")
 async def root():
     """Serve frontend"""
-    return FileResponse("/app/frontend/index.html")
+    import os
+    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "index.html")
+    if not os.path.exists(frontend_path):
+        return {"error": f"Frontend not found at {frontend_path}"}
+    return FileResponse(frontend_path)
 
 
 @app.get("/health")
