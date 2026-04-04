@@ -2,8 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Переключаем зеркала на Яндекс для скорости и обхода блокировок
+RUN sed -i 's/archive.ubuntu.com/mirror.yandex.ru/g' /etc/apt/sources.list.d/ubuntu.sources && \
+    sed -i 's/security.ubuntu.com/mirror.yandex.ru/g' /etc/apt/sources.list.d/ubuntu.sources
+
+# Принудительно используем IPv4 при установке
+RUN apt-get update -o Acquire::ForceIPv4=true && \
+    apt-get install -y -o Acquire::ForceIPv4=true --no-install-recommends \
     gcc \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
