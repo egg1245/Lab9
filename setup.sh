@@ -21,6 +21,12 @@ if ! python3 -m venv --help &> /dev/null; then
     apt-get update -qq && apt-get install -y python3-venv > /dev/null 2>&1
 fi
 
+# Remove old venv if broken
+if [ -d "venv" ] && [ ! -f "venv/bin/python" ]; then
+    echo "🔄 Removing broken venv..."
+    rm -rf venv
+fi
+
 # Create virtual environment
 if [ ! -d "venv" ]; then
     echo "📦 Creating virtual environment..."
@@ -29,28 +35,27 @@ else
     echo "✓ Virtual environment already exists"
 fi
 
-# Activate virtual environment
-source venv/bin/activate
-
-# Upgrade pip
+# Upgrade pip and install requirements
 echo "⬆️  Upgrading pip..."
-pip install --upgrade pip setuptools wheel -q
+venv/bin/pip install --upgrade pip setuptools wheel -q
 
 # Install Python dependencies
 echo "📥 Installing Python dependencies..."
-pip install -q -r backend/requirements.txt
+venv/bin/pip install -q -r backend/requirements.txt
 
 # Check if PostgreSQL is available
 if ! command -v psql &> /dev/null; then
     echo "⚠️  PostgreSQL client not found, but it can run in Docker"
-    echo "    Run: docker pull postgres:16-alpine"
 fi
 
 echo ""
 echo "✅ Setup complete!"
 echo ""
-echo "Next steps:"
-echo "1. Create .env file: cp .env.example .env"
-echo "2. Start PostgreSQL: docker run -d --name dormchef-pg -e POSTGRES_PASSWORD=dormchef -p 5432:5432 postgres:16-alpine"
-echo "3. Run backend: source venv/bin/activate && python backend/main.py"
-echo "4. Visit: http://localhost:8000"
+echo "Next steps (for Ubuntu VM):"
+echo "  bash start.sh"
+echo ""
+echo "Or manual steps:"
+echo "  1. cp .env.example .env"
+echo "  2. docker run -d --name dormchef-pg -e POSTGRES_PASSWORD=dormchef -p 5432:5432 postgres:16-alpine"
+echo "  3. venv/bin/python backend/main.py &"
+echo "  4. bash test.sh"

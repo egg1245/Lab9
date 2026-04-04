@@ -27,14 +27,11 @@ set -a
 source .env
 set +a
 
-# Create venv if needed
+# Check virtual environment
 if [ ! -d "venv" ]; then
-    echo -e "${YELLOW}📦 Creating virtual environment...${NC}"
-    python3 -m venv venv
+    echo -e "${YELLOW}📦 Virtual environment not found. Running setup...${NC}"
+    sudo bash setup.sh
 fi
-
-# Activate venv
-source venv/bin/activate
 
 # Start PostgreSQL container if not running
 if ! docker ps | grep -q dormchef-db; then
@@ -45,7 +42,6 @@ if ! docker ps | grep -q dormchef-db; then
         -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dormchef} \
         -e POSTGRES_DB=dormchef \
         -p 5432:5432 \
-        -v dormchef-pg-data:/var/lib/postgresql/data \
         postgres:16-alpine
     
     echo "⏳ Waiting for PostgreSQL to be ready..."
@@ -57,4 +53,4 @@ fi
 # Start FastAPI backend
 echo -e "${BLUE}🚀 Starting FastAPI backend on http://localhost:8000...${NC}"
 cd backend
-python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+../venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000
