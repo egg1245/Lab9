@@ -8,8 +8,9 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
-LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
+LLM_MODEL = os.getenv("LLM_MODEL", "openrouter/qwen/qwen-2.5-72b-instruct")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 
 SYSTEM_PROMPT = """You are a dorm cooking expert. Your task is to generate a detailed, step-by-step recipe using ONLY the provided ingredients and ONE specific kitchen appliance.
 
@@ -45,7 +46,10 @@ class LLMService:
     def __init__(self, provider: str = LLM_PROVIDER):
         self.provider = provider
         if provider == "openai":
-            self.client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+            self.client = AsyncOpenAI(
+                api_key=OPENAI_API_KEY,
+                base_url=OPENAI_API_BASE
+            )
         else:
             raise ValueError(f"Unsupported LLM provider: {provider}")
 
