@@ -23,8 +23,8 @@ ENV PYTHONPATH=/app
 # Expose port
 EXPOSE 8000
 
-# Create simple startup script
-RUN echo '#!/bin/bash\nset -e\ncd /app\npython -c "from backend.main import app; import uvicorn; uvicorn.run(app, host='\''0.0.0.0'\'', port=8000)"' > /app/start.sh && chmod +x /app/start.sh
+# Create simple startup script that explicitly disables reload
+RUN echo '#!/bin/bash\nset -e\ncd /app\nexec python -c "from backend.main import app; import uvicorn; uvicorn.run(app, host='\''0.0.0.0'\'', port=8000, reload=False)"' > /app/start.sh && chmod +x /app/start.sh
 
 # Run startup script
 CMD ["/app/start.sh"]
