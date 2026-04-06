@@ -23,5 +23,5 @@ ENV PYTHONPATH=/app
 # Expose port
 EXPOSE 8000
 
-# Run uvicorn from app root directory
-CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run uvicorn directly without reload in production
+CMD ["python", "-c", "from backend.main import app; import uvicorn; uvicorn.run(app, host='0.0.0.0', port=8000)"]
