@@ -9,11 +9,11 @@
         :root {
             --bg-primary: #ffffff;
             --bg-secondary: #f9fafb;
-            --text-primary: #000000;
-            --text-secondary: #4b5563;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
             --border-color: #e5e7eb;
-            --header-bg: linear-gradient(to right, #f97316, #eab308);
-            --header-text: #ffffff;
+            --accent-primary: #f97316;
+            --accent-secondary: #eab308;
         }
 
         body.dark-mode {
@@ -22,33 +22,595 @@
             --text-primary: #f3f4f6;
             --text-secondary: #d1d5db;
             --border-color: #374151;
-            --header-bg: linear-gradient(to right, #7c2d12, #713f12);
-            --header-text: #fbbf24;
+            --accent-primary: #fb923c;
+            --accent-secondary: #facc15;
         }
 
         body {
-            background: var(--bg-secondary);
+            background-color: var(--bg-secondary);
             color: var(--text-primary);
             transition: all 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .card {
+            background-color: var(--bg-primary);
+            border-color: var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .tab-btn {
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
         }
 
         .fade-in {
             animation: fadeIn 0.5s ease-in;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
+
         .spin {
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        .recipe-step {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent-primary);
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .difficulty-easy {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .dark-mode .difficulty-easy {
+            background-color: #064e3b;
+            color: #86efac;
+        }
+
+        .difficulty-medium {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .dark-mode .difficulty-medium {
+            background-color: #78350f;
+            color: #fcd34d;
+        }
+
+        .difficulty-hard {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .dark-mode .difficulty-hard {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+        }
     </style>
-    <script src="translations.js"></script>
 </head>
+<body class="transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="header text-white shadow-lg sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 py-6 flex justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-bold" data-i18n="title">🍳 DormChef</h1>
+                    <p class="text-white text-opacity-90 mt-2" data-i18n="subtitle">Generate personalized recipes with your ingredients</p>
+                </div>
+                <div class="flex gap-3">
+                    <button 
+                        id="languageToggle" 
+                        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition font-semibold"
+                        title="Switch language"
+                    >
+                        🌍 EN
+                    </button>
+                    <button 
+                        id="themeToggle" 
+                        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition font-semibold"
+                        title="Toggle dark/light mode"
+                    >
+                        🌙
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+            <!-- Tab Navigation -->
+            <div class="flex gap-4 mb-8 border-b-2 border-opacity-20 border-gray-400 overflow-x-auto">
+                <button id="tabGenerator" class="tab-btn active px-6 py-3 font-semibold whitespace-nowrap" data-i18n="tab_generate">
+                    🍳 Generate
+                </button>
+                <button id="tabHistory" class="tab-btn px-6 py-3 font-semibold whitespace-nowrap" data-i18n="tab_history">
+                    📚 History
+                </button>
+                <button id="tabAppliances" class="tab-btn px-6 py-3 font-semibold whitespace-nowrap" data-i18n="tab_appliances">
+                    ⚙️ Appliances
+                </button>
+            </div>
+
+            <!-- Generator Tab -->
+            <div id="generatorTab" class="tab-content fade-in">
+                <div class="card rounded-lg shadow-lg p-8 mb-8 border-2">
+                    <h2 class="text-2xl font-bold mb-6" data-i18n="create_recipe">Create Your Recipe</h2>
+                    
+                    <!-- Ingredients Input -->
+                    <div class="mb-6">
+                        <label class="block text-lg font-semibold mb-2" data-i18n="ingredients_label">
+                            Ingredients (comma-separated)
+                        </label>
+                        <input 
+                            id="ingredientsInput" 
+                            type="text" 
+                            placeholder="e.g., eggs, bread, butter, cheese"
+                            class="w-full px-4 py-3 border-2 border-opacity-50 border-gray-400 rounded-lg focus:outline-none focus:border-opacity-100"
+                            style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"
+                        >
+                    </div>
+
+                    <!-- Appliances Selection -->
+                    <div class="mb-6">
+                        <label class="block text-lg font-semibold mb-2" data-i18n="appliances_label">
+                            Select Appliances
+                        </label>
+                        <div id="appliancesGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="appliance-1" value="1" class="mr-2">
+                                <label for="appliance-1" class="cursor-pointer">🔬 Microwave</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="appliance-2" value="2" class="mr-2">
+                                <label for="appliance-2" class="cursor-pointer">🍞 Toaster</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="appliance-3" value="3" class="mr-2">
+                                <label for="appliance-3" class="cursor-pointer">🔥 Hot Plate</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="appliance-4" value="4" class="mr-2">
+                                <label for="appliance-4" class="cursor-pointer">🌪️ Air Fryer</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="appliance-5" value="5" class="mr-2">
+                                <label for="appliance-5" class="cursor-pointer">🔥 Oven</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="appliance-6" value="6" class="mr-2">
+                                <label for="appliance-6" class="cursor-pointer">🥤 Blender</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <button 
+                        id="generateBtn" 
+                        class="btn-primary w-full px-6 py-3 rounded-lg font-semibold text-lg"
+                        data-i18n="generate_btn"
+                    >
+                        Generate Recipe
+                    </button>
+                </div>
+
+                <!-- Recipe Display -->
+                <div id="recipeContainer" class="hidden">
+                    <div class="card rounded-lg shadow-lg p-8 border-2 fade-in">
+                        <div id="recipeContent"></div>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="loadingIndicator" class="hidden text-center py-12">
+                    <div class="inline-block">
+                        <div class="spin text-6xl">⏳</div>
+                        <p class="mt-4 text-lg" data-i18n="generating">Generating your delicious recipe...</p>
+                    </div>
+                </div>
+
+                <!-- Error Message -->
+                <div id="errorMessage" class="hidden card rounded-lg shadow-lg p-8 border-2 border-red-500 bg-red-50">
+                    <p class="text-red-700" id="errorText"></p>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-content hidden">
+                <div class="card rounded-lg shadow-lg p-8 border-2 fade-in">
+                    <h2 class="text-2xl font-bold mb-6" data-i18n="recipe_history">Recipe History</h2>
+                    <div id="historyContent">
+                        <p class="text-center text-gray-500" data-i18n="no_history">No recipes yet. Create one!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appliances Tab -->
+            <div id="appliancesTab" class="tab-content hidden">
+                <div class="card rounded-lg shadow-lg p-8 border-2 fade-in">
+                    <h2 class="text-2xl font-bold mb-6" data-i18n="available_appliances">Available Appliances</h2>
+                    <div id="appliancesContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <p class="col-span-full text-center text-gray-500" data-i18n="loading">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-opacity-10 bg-gray-800 text-center py-4 text-gray-600 mt-12">
+            <p data-i18n="footer">DormChef v2.0.0 - Making dorm cooking easy and delicious 🍳</p>
+        </footer>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            language: localStorage.getItem('language') || 'en',
+            darkMode: localStorage.getItem('darkMode') === 'true',
+            recipes: []
+        };
+
+        // Translations
+        const translations = {
+            en: {
+                title: '🍳 DormChef',
+                subtitle: 'Generate personalized recipes with your ingredients',
+                tab_generate: '🍳 Generate',
+                tab_history: '📚 History',
+                tab_appliances: '⚙️ Appliances',
+                create_recipe: 'Create Your Recipe',
+                ingredients_label: 'Ingredients (comma-separated)',
+                appliances_label: 'Select Appliances',
+                generate_btn: 'Generate Recipe 🎯',
+                generating: 'Generating your delicious recipe...',
+                recipe_history: 'Recipe History',
+                no_history: 'No recipes yet. Create one!',
+                available_appliances: 'Available Appliances',
+                loading: 'Loading...',
+                footer: 'DormChef v2.0.0 - Making dorm cooking easy and delicious 🍳',
+                error: 'Error generating recipe',
+                no_ingredients: 'Please enter at least one ingredient',
+                no_appliances: 'Please select at least one appliance',
+                difficulty_easy: 'Easy',
+                difficulty_medium: 'Medium',
+                difficulty_hard: 'Hard',
+                time: 'Time',
+                servings: 'Servings',
+                steps: 'Steps',
+                notes: 'Notes',
+                ingredients: 'Ingredients'
+            },
+            ru: {
+                title: '🍳 DormChef',
+                subtitle: 'Генерируйте персонализированные рецепты с вашими ингредиентами',
+                tab_generate: '🍳 Генератор',
+                tab_history: '📚 История',
+                tab_appliances: '⚙️ Приборы',
+                create_recipe: 'Создайте ваш рецепт',
+                ingredients_label: 'Ингредиенты (через запятую)',
+                appliances_label: 'Выберите приборы',
+                generate_btn: 'Сгенерировать рецепт 🎯',
+                generating: 'Генерирую вкусный рецепт...',
+                recipe_history: 'История рецептов',
+                no_history: 'Нет рецептов. Создайте первый!',
+                available_appliances: 'Доступные приборы',
+                loading: 'Загрузка...',
+                footer: 'DormChef v2.0.0 - Делаем студенческую кухню легкой и вкусной 🍳',
+                error: 'Ошибка при генерации рецепта',
+                no_ingredients: 'Пожалуйста, введите хотя бы один ингредиент',
+                no_appliances: 'Пожалуйста, выберите хотя бы один прибор',
+                difficulty_easy: 'Легко',
+                difficulty_medium: 'Средне',
+                difficulty_hard: 'Сложно',
+                time: 'Время',
+                servings: 'Порции',
+                steps: 'Шаги',
+                notes: 'Заметки',
+                ingredients: 'Ингредиенты'
+            }
+        };
+
+        // Initialize
+        function init() {
+            applyTheme();
+            setupEventListeners();
+            loadRecipes();
+            updateTranslations();
+        }
+
+        // Theme Management
+        function applyTheme() {
+            if (state.darkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeToggle').textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.getElementById('themeToggle').textContent = '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            state.darkMode = !state.darkMode;
+            localStorage.setItem('darkMode', state.darkMode);
+            applyTheme();
+        }
+
+        // Language Management
+        function toggleLanguage() {
+            state.language = state.language === 'en' ? 'ru' : 'en';
+            localStorage.setItem('language', state.language);
+            updateTranslations();
+            document.getElementById('languageToggle').textContent = `🌍 ${state.language.toUpperCase()}`;
+        }
+
+        function updateTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[state.language][key]) {
+                    el.textContent = translations[state.language][key];
+                }
+            });
+        }
+
+        function t(key) {
+            return translations[state.language][key] || key;
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            document.getElementById('languageToggle').addEventListener('click', toggleLanguage);
+            document.getElementById('generateBtn').addEventListener('click', generateRecipe);
+
+            // Tab switching
+            document.getElementById('tabGenerator').addEventListener('click', () => switchTab('generator'));
+            document.getElementById('tabHistory').addEventListener('click', () => switchTab('history'));
+            document.getElementById('tabAppliances').addEventListener('click', () => switchTab('appliances'));
+        }
+
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            // Show selected tab
+            const tabMap = {
+                'generator': 'generatorTab',
+                'history': 'historyTab',
+                'appliances': 'appliancesTab'
+            };
+            document.getElementById(tabMap[tab]).classList.remove('hidden');
+            document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+
+            if (tab === 'appliances') {
+                loadAppliances();
+            } else if (tab === 'history') {
+                loadRecipes();
+            }
+        }
+
+        // Recipe Generation
+        async function generateRecipe() {
+            const ingredients = document.getElementById('ingredientsInput').value
+                .split(',')
+                .map(i => i.trim())
+                .filter(i => i.length > 0);
+
+            const applianceIds = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(c => parseInt(c.value));
+
+            if (ingredients.length === 0) {
+                showError(t('no_ingredients'));
+                return;
+            }
+
+            if (applianceIds.length === 0) {
+                showError(t('no_appliances'));
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ingredients, appliance_ids: applianceIds })
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const recipe = await response.json();
+                displayRecipe(recipe);
+                state.recipes.unshift(recipe);
+                saveRecipes();
+            } catch (error) {
+                console.error('Error:', error);
+                showError(t('error') + ': ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayRecipe(recipe) {
+            const content = `
+                <div>
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="text-3xl font-bold mb-2">${recipe.content.title}</h3>
+                            <p class="text-lg" style="color: var(--text-secondary);">${recipe.content.description || ''}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="text-center p-3 rounded-lg" style="background-color: var(--bg-secondary);">
+                            <div class="text-2xl font-bold">${recipe.content.time_minutes}</div>
+                            <div style="color: var(--text-secondary);" data-i18n="time">Time</div>
+                        </div>
+                        <div class="text-center p-3 rounded-lg" style="background-color: var(--bg-secondary);">
+                            <div class="text-2xl font-bold">${recipe.content.difficulty}</div>
+                            <div style="color: var(--text-secondary);">Difficulty</div>
+                        </div>
+                        <div class="text-center p-3 rounded-lg" style="background-color: var(--bg-secondary);">
+                            <div class="text-2xl font-bold">${recipe.content.servings || 2}</div>
+                            <div style="color: var(--text-secondary);" data-i18n="servings">Servings</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h4 class="text-xl font-bold mb-3" data-i18n="steps">Steps</h4>
+                        ${recipe.content.steps.map(step => `
+                            <div class="recipe-step">
+                                <div class="font-bold mb-2">Step ${step.step_number}: ${step.instruction}</div>
+                                <div style="color: var(--text-secondary); font-size: 0.875rem;">⏱️ ${step.duration_minutes} min</div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${recipe.content.notes ? `
+                        <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+                            <h4 class="font-bold mb-2" data-i18n="notes">Notes</h4>
+                            <p>${recipe.content.notes}</p>
+                        </div>
+                    ` : ''}
+
+                    <div class="mt-6 flex gap-2 flex-wrap">
+                        ${recipe.appliances.map(app => `
+                            <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold" 
+                                  style="background-color: var(--bg-secondary);">
+                                ${app.name}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('recipeContent').innerHTML = content;
+            document.getElementById('recipeContainer').classList.remove('hidden');
+            updateTranslations();
+        }
+
+        async function loadRecipes() {
+            try {
+                const response = await fetch('/api/recipes');
+                if (response.ok) {
+                    const recipes = await response.json();
+                    const html = recipes.length > 0 ? recipes.map((r, i) => `
+                        <div class="card rounded-lg p-4 border-2 mb-4 cursor-pointer hover:shadow-lg transition" onclick="showRecipeDetail(${i})">
+                            <h3 class="font-bold text-lg">${r.content.title}</h3>
+                            <p style="color: var(--text-secondary);" class="text-sm">${r.ingredients.join(', ')}</p>
+                            <div class="mt-2 text-sm">
+                                <span class="inline-block px-2 py-1 rounded mr-2" style="background-color: var(--bg-secondary);">
+                                    ⏱️ ${r.content.time_minutes} min
+                                </span>
+                                <span class="inline-block px-2 py-1 rounded" style="background-color: var(--bg-secondary);">
+                                    📅 ${new Date(r.created_at).toLocaleDateString()}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('') : `<p class="text-center" data-i18n="no_history">No recipes yet</p>`;
+                    document.getElementById('historyContent').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading recipes:', error);
+            }
+        }
+
+        async function loadAppliances() {
+            try {
+                const response = await fetch('/api/appliances');
+                if (response.ok) {
+                    const appliances = await response.json();
+                    const emojis = ['🔬', '🍞', '🔥', '🌪️', '🔥', '🥤'];
+                    const html = appliances.map((a, i) => `
+                        <div class="card rounded-lg p-4 border-2">
+                            <h3 class="font-bold text-lg">${emojis[i % emojis.length]} ${a.name}</h3>
+                            <p style="color: var(--text-secondary);">${a.description || ''}</p>
+                        </div>
+                    `).join('');
+                    document.getElementById('appliancesContent').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading appliances:', error);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
+            document.getElementById('recipeContainer').classList.toggle('hidden', show);
+        }
+
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        function saveRecipes() {
+            localStorage.setItem('recipes', JSON.stringify(state.recipes));
+        }
+
+        function loadLocalRecipes() {
+            const saved = localStorage.getItem('recipes');
+            if (saved) {
+                state.recipes = JSON.parse(saved);
+            }
+        }
+
+        function showRecipeDetail(index) {
+            if (state.recipes[index]) {
+                displayRecipe(state.recipes[index]);
+                switchTab('generator');
+            }
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
 <body class="bg-gradient-to-br from-orange-50 to-yellow-50">
     <div class="min-h-screen flex flex-col">
         <!-- Header -->
