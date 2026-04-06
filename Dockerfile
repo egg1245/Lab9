@@ -20,8 +20,11 @@ WORKDIR /app
 # Set PYTHONPATH to include app directory
 ENV PYTHONPATH=/app
 
+# Create uvicorn config file
+RUN echo '[tool.uvicorn]\nreload = false' > /app/uvicorn.ini
+
 # Expose port
 EXPOSE 8000
 
-# Run directly using uvicorn with reload disabled 
-CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload=False"]
+# Run with config
+CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
