@@ -17,6 +17,9 @@ COPY frontend/ /app/frontend/
 # Set working directory to app root (for proper imports)
 WORKDIR /app
 
+# Set PYTHONPATH to include app directory
+ENV PYTHONPATH=/app
+
 # Expose port
 EXPOSE 8000
 
