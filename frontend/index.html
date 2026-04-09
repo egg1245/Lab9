@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DormChef - Recipe Generator</title>
+    <title>🍳 DormChef - Recipe Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --bg-primary: #ffffff;
-            --bg-secondary: #f9fafb;
+            --bg-secondary: #f3f4f6;
             --text-primary: #1f2937;
             --text-secondary: #6b7280;
             --border-color: #e5e7eb;
-            --accent-primary: #f97316;
-            --accent-secondary: #eab308;
+            --accent: #f97316;
+            --input-bg: #ffffff;
+            --input-text: #1f2937;
+            --input-border: #d1d5db;
         }
 
         body.dark-mode {
@@ -22,57 +24,52 @@
             --text-primary: #f3f4f6;
             --text-secondary: #d1d5db;
             --border-color: #374151;
-            --accent-primary: #fb923c;
-            --accent-secondary: #facc15;
+            --accent: #fb923c;
+            --input-bg: #374151;
+            --input-text: #f3f4f6;
+            --input-border: #4b5563;
         }
 
         body {
             background-color: var(--bg-secondary);
             color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-
-        .header {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .card {
             background-color: var(--bg-primary);
             border-color: var(--border-color);
-            transition: all 0.3s ease;
+            transition: background-color 0.3s;
+        }
+
+        input, select, textarea {
+            background-color: var(--input-bg) !important;
+            color: var(--input-text) !important;
+            border-color: var(--input-border) !important;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-color: var(--accent);
             color: white;
-            transition: all 0.2s ease;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0.9;
         }
 
         .tab-btn {
-            transition: all 0.2s ease;
             border-bottom: 3px solid transparent;
+            transition: border-color 0.2s;
+            color: var(--text-primary);
         }
 
         .tab-btn.active {
-            color: var(--accent-primary);
-            border-bottom-color: var(--accent-primary);
+            border-bottom-color: var(--accent);
+            color: var(--accent);
         }
 
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .spin {
+        .loading {
+            display: inline-block;
             animation: spin 1s linear infinite;
         }
 
@@ -81,1396 +78,498 @@
             to { transform: rotate(360deg); }
         }
 
-        .recipe-step {
-            background-color: var(--bg-secondary);
-            border-left: 4px solid var(--accent-primary);
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: 0.375rem;
+        .text-muted {
+            color: var(--text-secondary);
         }
 
-        .difficulty-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
+        .error-text {
+            color: #dc2626;
         }
 
-        .difficulty-easy {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-
-        .dark-mode .difficulty-easy {
-            background-color: #064e3b;
-            color: #86efac;
-        }
-
-        .difficulty-medium {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-
-        .dark-mode .difficulty-medium {
-            background-color: #78350f;
-            color: #fcd34d;
-        }
-
-        .difficulty-hard {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-
-        .dark-mode .difficulty-hard {
-            background-color: #7f1d1d;
+        .dark-mode .error-text {
             color: #fca5a5;
         }
-    </style>
 </head>
-<body class="transition-colors duration-300">
-    <div class="min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="header text-white shadow-lg sticky top-0 z-50">
-            <div class="max-w-6xl mx-auto px-4 py-6 flex justify-between items-center">
-                <div>
-                    <h1 class="text-4xl font-bold" data-i18n="title">🍳 DormChef</h1>
-                    <p class="text-white text-opacity-90 mt-2" data-i18n="subtitle">Generate personalized recipes with your ingredients</p>
-                </div>
-                <div class="flex gap-3">
-                    <button 
-                        id="languageToggle" 
-                        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition font-semibold"
-                        title="Switch language"
-                    >
-                        🌍 EN
-                    </button>
-                    <button 
-                        id="themeToggle" 
-                        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition font-semibold"
-                        title="Toggle dark/light mode"
-                    >
-                        🌙
-                    </button>
-                </div>
+<body>
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-orange-500 to-yellow-500 text-white p-4">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold">🍳 DormChef</h1>
+            <div class="flex gap-2">
+                <button id="themeBtn" class="text-2xl hover:scale-110 transition" title="Toggle theme">🌙</button>
+                <button id="langBtn" class="px-3 py-1 bg-white text-orange-500 rounded font-bold" title="Toggle language">EN</button>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- Main Content -->
-        <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
-            <!-- Tab Navigation -->
-            <div class="flex gap-4 mb-8 border-b-2 border-opacity-20 border-gray-400 overflow-x-auto">
-                <button id="tabGenerator" class="tab-btn active px-6 py-3 font-semibold whitespace-nowrap" data-i18n="tab_generate">
-                    🍳 Generate
-                </button>
-                <button id="tabHistory" class="tab-btn px-6 py-3 font-semibold whitespace-nowrap" data-i18n="tab_history">
-                    📚 History
-                </button>
-                <button id="tabAppliances" class="tab-btn px-6 py-3 font-semibold whitespace-nowrap" data-i18n="tab_appliances">
-                    ⚙️ Appliances
-                </button>
-            </div>
+    <!-- Navigation Tabs -->
+    <div class="max-w-4xl mx-auto mt-6 flex gap-4 border-b px-6" style="border-color: var(--border-color);">
+        <button class="tab-btn active px-4 py-2 text-lg font-semibold" data-tab="generator" data-i18n-key="tabGenerate">🍳 Generate</button>
+        <button class="tab-btn px-4 py-2 text-lg font-semibold" data-tab="history" data-i18n-key="tabHistory">📋 History</button>
+        <button class="tab-btn px-4 py-2 text-lg font-semibold" data-tab="appliances" data-i18n-key="tabAppliances">⚙️ Appliances</button>
+    </div>
 
-            <!-- Generator Tab -->
-            <div id="generatorTab" class="tab-content fade-in">
-                <div class="card rounded-lg shadow-lg p-8 mb-8 border-2">
-                    <h2 class="text-2xl font-bold mb-6" data-i18n="create_recipe">Create Your Recipe</h2>
-                    
-                    <!-- Ingredients Input -->
-                    <div class="mb-6">
-                        <label class="block text-lg font-semibold mb-2" data-i18n="ingredients_label">
-                            Ingredients (comma-separated)
-                        </label>
-                        <input 
-                            id="ingredientsInput" 
-                            type="text" 
-                            placeholder="e.g., eggs, bread, butter, cheese"
-                            class="w-full px-4 py-3 border-2 border-opacity-50 border-gray-400 rounded-lg focus:outline-none focus:border-opacity-100"
-                            style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"
-                        >
-                    </div>
+    <main class="max-w-4xl mx-auto p-6">
+        <!-- TAB: Generator -->
+        <section id="tab-generator" class="tab-content">
+            <div class="card border rounded-lg p-6 shadow">
+                <h2 class="text-2xl font-bold mb-4" data-i18n-key="generate_title">Generate Recipe</h2>
 
-                    <!-- Appliances Selection -->
-                    <div class="mb-6">
-                        <label class="block text-lg font-semibold mb-2" data-i18n="appliances_label">
-                            Select Appliances
-                        </label>
-                        <div id="appliancesGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="appliance-1" value="1" class="mr-2">
-                                <label for="appliance-1" class="cursor-pointer">🔬 Microwave</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="appliance-2" value="2" class="mr-2">
-                                <label for="appliance-2" class="cursor-pointer">🍞 Toaster</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="appliance-3" value="3" class="mr-2">
-                                <label for="appliance-3" class="cursor-pointer">🔥 Hot Plate</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="appliance-4" value="4" class="mr-2">
-                                <label for="appliance-4" class="cursor-pointer">🌪️ Air Fryer</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="appliance-5" value="5" class="mr-2">
-                                <label for="appliance-5" class="cursor-pointer">🔥 Oven</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="appliance-6" value="6" class="mr-2">
-                                <label for="appliance-6" class="cursor-pointer">🥤 Blender</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Generate Button -->
-                    <button 
-                        id="generateBtn" 
-                        class="btn-primary w-full px-6 py-3 rounded-lg font-semibold text-lg"
-                        data-i18n="generate_btn"
-                    >
-                        Generate Recipe
-                    </button>
+                <!-- Ingredients Input -->
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2" data-i18n-key="ingredients">Ingredients:</label>
+                    <input type="text" id="ingredientsInput" placeholder="e.g., eggs, bread, butter" class="w-full px-4 py-2 border rounded card" />
+                    <small class="text-muted" data-i18n-key="ingredients_hint">Separate with commas</small>
                 </div>
 
-                <!-- Recipe Display -->
-                <div id="recipeContainer" class="hidden">
-                    <div class="card rounded-lg shadow-lg p-8 border-2 fade-in">
-                        <div id="recipeContent"></div>
+                <!-- Appliances Checkboxes -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-3" data-i18n-key="appliances">Appliances:</label>
+                    <div id="appliancesContainer" class="grid grid-cols-2 gap-3 mb-4">
+                        <p class="text-muted">Loading appliances...</p>
                     </div>
                 </div>
 
-                <!-- Loading Indicator -->
-                <div id="loadingIndicator" class="hidden text-center py-12">
-                    <div class="inline-block">
-                        <div class="spin text-6xl">⏳</div>
-                        <p class="mt-4 text-lg" data-i18n="generating">Generating your delicious recipe...</p>
-                    </div>
+                <!-- Generate Button -->
+                <button id="generateBtn" class="btn-primary px-6 py-3 rounded font-bold w-full">
+                    <span data-i18n-key="generate_btn">Generate Recipe</span>
+                </button>
+
+                <!-- Loading State -->
+                <div id="loadingSpinner" class="hidden mt-4 text-center">
+                    <span class="loading">⏳</span> <span data-i18n-key="generating">Generating...</span>
                 </div>
 
                 <!-- Error Message -->
-                <div id="errorMessage" class="hidden card rounded-lg shadow-lg p-8 border-2 border-red-500 bg-red-50">
-                    <p class="text-red-700" id="errorText"></p>
+                <div id="errorMsg" class="hidden mt-4 p-3 rounded" style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444;">
+                    <p id="errorText" class="error-text"></p>
                 </div>
-            </div>
 
-            <!-- History Tab -->
-            <div id="historyTab" class="tab-content hidden">
-                <div class="card rounded-lg shadow-lg p-8 border-2 fade-in">
-                    <h2 class="text-2xl font-bold mb-6" data-i18n="recipe_history">Recipe History</h2>
-                    <div id="historyContent">
-                        <p class="text-center text-gray-500" data-i18n="no_history">No recipes yet. Create one!</p>
+                <!-- Recipe Display -->
+                <div id="recipeResult" class="hidden mt-6 p-4 border rounded card">
+                    <h3 id="recipeTitle" class="text-2xl font-bold mb-2"></h3>
+                    <p id="recipeDesc" class="text-sm mb-3 text-muted"></p>
+                    <div class="flex gap-4 text-sm mb-4 flex-wrap">
+                        <span><strong data-i18n-key="time">Time:</strong> <span id="recipeTime"></span> min</span>
+                        <span><strong data-i18n-key="difficulty">Difficulty:</strong> <span id="recipeDifficulty"></span></span>
+                        <span><strong data-i18n-key="servings">Servings:</strong> <span id="recipeServings"></span></span>
                     </div>
+
+                    <!-- Recipe Steps -->
+                    <h4 class="font-semibold mb-2" data-i18n-key="steps">Steps:</h4>
+                    <div id="recipeSteps" class="space-y-2 mb-4"></div>
+
+                    <!-- Notes -->
+                    <p id="recipeNotes" class="text-sm italic text-muted"></p>
                 </div>
             </div>
+        </section>
 
-            <!-- Appliances Tab -->
-            <div id="appliancesTab" class="tab-content hidden">
-                <div class="card rounded-lg shadow-lg p-8 border-2 fade-in">
-                    <h2 class="text-2xl font-bold mb-6" data-i18n="available_appliances">Available Appliances</h2>
-                    <div id="appliancesContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <p class="col-span-full text-center text-gray-500" data-i18n="loading">Loading...</p>
+        <!-- TAB: History -->
+        <section id="tab-history" class="tab-content hidden">
+            <div class="card border rounded-lg p-6 shadow">
+                <h2 class="text-2xl font-bold mb-4" data-i18n-key="history_title">Recipe History</h2>
+                <div id="historyContainer" class="space-y-3">
+                    <p class="text-muted">No recipes yet. Generate one!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: Appliances -->
+        <section id="tab-appliances" class="tab-content hidden">
+            <div class="card border rounded-lg p-6 shadow">
+                <h2 class="text-2xl font-bold mb-4" data-i18n-key="available_appliances">Available Appliances</h2>
+                
+                <!-- Add Custom Appliance Form -->
+                <div class="card border rounded p-4 mb-6 bg-gray-50" style="background-color: var(--bg-secondary);">
+                    <h3 class="font-bold mb-3">➕ Add Custom Appliance</h3>
+                    <div class="space-y-3">
+                        <input 
+                            type="text" 
+                            id="customApplianceName" 
+                            placeholder="Appliance name (e.g., Rice Cooker)" 
+                            class="w-full p-2 border rounded"
+                        />
+                        <input 
+                            type="text" 
+                            id="customApplianceDesc" 
+                            placeholder="Description (optional)" 
+                            class="w-full p-2 border rounded"
+                        />
+                        <button 
+                            onclick="addCustomAppliance()" 
+                            class="btn-primary px-4 py-2 rounded text-white cursor-pointer font-semibold"
+                        >
+                            Add Appliance
+                        </button>
                     </div>
+                    <p id="customApplianceError" class="error-text mt-2 hidden"></p>
+                </div>
+
+                <!-- List of Appliances -->
+                <div id="appliancesListContainer" class="grid grid-cols-2 gap-4">
+                    <p class="text-muted">Loading...</p>
                 </div>
             </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="bg-opacity-10 bg-gray-800 text-center py-4 text-gray-600 mt-12">
-            <p data-i18n="footer">DormChef v2.0.0 - Making dorm cooking easy and delicious 🍳</p>
-        </footer>
-    </div>
+        </section>
+    </main>
 
     <script>
-        // State Management
-        const state = {
-            language: localStorage.getItem('language') || 'en',
-            darkMode: localStorage.getItem('darkMode') === 'true',
-            recipes: []
-        };
-
-        // Translations
-        const translations = {
+        // APPLIANCE NAME TRANSLATIONS (Dynamic)
+        const applianceTranslations = {
             en: {
-                title: '🍳 DormChef',
-                subtitle: 'Generate personalized recipes with your ingredients',
-                tab_generate: '🍳 Generate',
-                tab_history: '📚 History',
-                tab_appliances: '⚙️ Appliances',
-                create_recipe: 'Create Your Recipe',
-                ingredients_label: 'Ingredients (comma-separated)',
-                appliances_label: 'Select Appliances',
-                generate_btn: 'Generate Recipe 🎯',
-                generating: 'Generating your delicious recipe...',
-                recipe_history: 'Recipe History',
-                no_history: 'No recipes yet. Create one!',
-                available_appliances: 'Available Appliances',
-                loading: 'Loading...',
-                footer: 'DormChef v2.0.0 - Making dorm cooking easy and delicious 🍳',
-                error: 'Error generating recipe',
-                no_ingredients: 'Please enter at least one ingredient',
-                no_appliances: 'Please select at least one appliance',
-                difficulty_easy: 'Easy',
-                difficulty_medium: 'Medium',
-                difficulty_hard: 'Hard',
-                time: 'Time',
-                servings: 'Servings',
-                steps: 'Steps',
-                notes: 'Notes',
-                ingredients: 'Ingredients'
+                'Microwave': 'Microwave',
+                'Toaster': 'Toaster',
+                'Hot Plate': 'Hot Plate',
+                'Air Fryer': 'Air Fryer',
+                'Oven': 'Oven',
+                'Blender': 'Blender',
+                'Аэрогриль': 'Air Grill',
             },
             ru: {
-                title: '🍳 DormChef',
-                subtitle: 'Генерируйте персонализированные рецепты с вашими ингредиентами',
-                tab_generate: '🍳 Генератор',
-                tab_history: '📚 История',
-                tab_appliances: '⚙️ Приборы',
-                create_recipe: 'Создайте ваш рецепт',
-                ingredients_label: 'Ингредиенты (через запятую)',
-                appliances_label: 'Выберите приборы',
-                generate_btn: 'Сгенерировать рецепт 🎯',
-                generating: 'Генерирую вкусный рецепт...',
-                recipe_history: 'История рецептов',
-                no_history: 'Нет рецептов. Создайте первый!',
-                available_appliances: 'Доступные приборы',
-                loading: 'Загрузка...',
-                footer: 'DormChef v2.0.0 - Делаем студенческую кухню легкой и вкусной 🍳',
-                error: 'Ошибка при генерации рецепта',
-                no_ingredients: 'Пожалуйста, введите хотя бы один ингредиент',
-                no_appliances: 'Пожалуйста, выберите хотя бы один прибор',
-                difficulty_easy: 'Легко',
-                difficulty_medium: 'Средне',
-                difficulty_hard: 'Сложно',
-                time: 'Время',
-                servings: 'Порции',
-                steps: 'Шаги',
-                notes: 'Заметки',
-                ingredients: 'Ингредиенты'
+                'Microwave': 'Микроволновка',
+                'Toaster': 'Тостер',
+                'Hot Plate': 'Плитка',
+                'Air Fryer': 'Аэрофритюрница',
+                'Oven': 'Духовка',
+                'Blender': 'Блендер',
+                'Аэрогриль': 'Аэрогриль',
             }
         };
 
-        // Initialize
-        function init() {
-            applyTheme();
-            setupEventListeners();
-            loadRecipes();
-            updateTranslations();
-        }
-
-        // Theme Management
-        function applyTheme() {
-            if (state.darkMode) {
-                document.body.classList.add('dark-mode');
-                document.getElementById('themeToggle').textContent = '☀️';
-            } else {
-                document.body.classList.remove('dark-mode');
-                document.getElementById('themeToggle').textContent = '🌙';
+        // UI TRANSLATIONS
+        const translations = {
+            en: {
+                tabGenerate: "🍳 Generate",
+                tabHistory: "📋 History",
+                tabAppliances: "⚙️ Appliances",
+                generate_title: "Generate Recipe",
+                ingredients: "Ingredients:",
+                ingredients_hint: "Separate with commas",
+                appliances: "Select appliances:",
+                generate_btn: "Generate Recipe",
+                generating: "Generating recipe...",
+                time: "Time:",
+                difficulty: "Difficulty:",
+                servings: "Servings:",
+                steps: "Steps:",
+                history_title: "Recipe History",
+                no_recipes: "No recipes yet. Generate one!",
+                available_appliances: "Available Appliances",
+                error_generate: "Failed to generate recipe. Try again.",
+                error_load_appliances: "Failed to load appliances.",
+            },
+            ru: {
+                tabGenerate: "🍳 Генератор",
+                tabHistory: "📋 История",
+                tabAppliances: "⚙️ Приборы",
+                generate_title: "Создать рецепт",
+                ingredients: "Ингредиенты:",
+                ingredients_hint: "Разделите запятыми",
+                appliances: "Выберите приборы:",
+                generate_btn: "Создать рецепт",
+                generating: "Генерируем рецепт...",
+                time: "Время:",
+                difficulty: "Сложность:",
+                servings: "Порций:",
+                steps: "Шаги:",
+                history_title: "История рецептов",
+                no_recipes: "Рецептов нет. Создайте один!",
+                available_appliances: "Доступные приборы",
+                error_generate: "Ошибка при создании рецепта.",
+                error_load_appliances: "Ошибка при загрузке приборов.",
             }
-        }
+        };
 
+        // STATE
+        let state = {
+            language: localStorage.getItem('language') || 'en',
+            darkMode: localStorage.getItem('darkMode') === 'true',
+            appliances: [],
+            recipes: [],
+        };
+
+        // INIT
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme();
+            updateLanguage();
+            setupEventListeners();
+            loadAppliances();
+            loadRecipes();
+        });
+
+        // THEME TOGGLE
         function toggleTheme() {
             state.darkMode = !state.darkMode;
             localStorage.setItem('darkMode', state.darkMode);
             applyTheme();
         }
 
-        // Language Management
+        function applyTheme() {
+            const btn = document.getElementById('themeBtn');
+            if (state.darkMode) {
+                document.body.classList.add('dark-mode');
+                btn.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                btn.textContent = '🌙';
+            }
+        }
+
+        // LANGUAGE TOGGLE
         function toggleLanguage() {
             state.language = state.language === 'en' ? 'ru' : 'en';
             localStorage.setItem('language', state.language);
-            updateTranslations();
-            document.getElementById('languageToggle').textContent = `🌍 ${state.language.toUpperCase()}`;
+            updateLanguage();
         }
 
-        function updateTranslations() {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[state.language][key]) {
-                    el.textContent = translations[state.language][key];
+        function translateApplianceName(originalName) {
+            const dict = applianceTranslations[state.language];
+            return dict && dict[originalName] ? dict[originalName] : originalName;
+        }
+
+        function updateLanguage() {
+            const btn = document.getElementById('langBtn');
+            btn.textContent = state.language.toUpperCase();
+
+            // Update static UI text
+            document.querySelectorAll('[data-i18n-key]').forEach(el => {
+                const key = el.getAttribute('data-i18n-key');
+                const text = translations[state.language][key];
+                if (text) {
+                    if (el.tagName === 'INPUT') {
+                        el.placeholder = text;
+                    } else {
+                        el.textContent = text;
+                    }
                 }
             });
+
+            // Re-render appliances with new language
+            updateApplianceDisplay();
+            
+            // Re-translate all recipes in history
+            displayHistory();
         }
 
-        function t(key) {
-            return translations[state.language][key] || key;
+        function updateApplianceDisplay() {
+            // Checkboxes in Generator
+            const container = document.getElementById('appliancesContainer');
+            container.innerHTML = state.appliances.map(app => `
+                <label class="flex items-center gap-2 cursor-pointer p-2 rounded" style="background-color: transparent;" onmouseover="this.style.backgroundColor='var(--border-color)'" onmouseout="this.style.backgroundColor='transparent'">
+                    <input type="checkbox" class="appliance-checkbox w-4 h-4" value="${app.id}" />
+                    <span>${translateApplianceName(app.name)}</span>
+                </label>
+            `).join('');
+
+            // List in Appliances tab
+            const listContainer = document.getElementById('appliancesListContainer');
+            listContainer.innerHTML = state.appliances.map(app => `
+                <div class="card border rounded p-3 shadow-sm">
+                    <h3 class="font-bold">${translateApplianceName(app.name)}</h3>
+                    <p class="text-sm text-muted">${app.description || ''}</p>
+                </div>
+            `).join('');
         }
 
-        // Event Listeners
-        function setupEventListeners() {
-            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-            document.getElementById('languageToggle').addEventListener('click', toggleLanguage);
-            document.getElementById('generateBtn').addEventListener('click', generateRecipe);
-
-            // Tab switching
-            document.getElementById('tabGenerator').addEventListener('click', () => switchTab('generator'));
-            document.getElementById('tabHistory').addEventListener('click', () => switchTab('history'));
-            document.getElementById('tabAppliances').addEventListener('click', () => switchTab('appliances'));
-        }
-
-        function switchTab(tab) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
-            // Show selected tab
-            const tabMap = {
-                'generator': 'generatorTab',
-                'history': 'historyTab',
-                'appliances': 'appliancesTab'
-            };
-            document.getElementById(tabMap[tab]).classList.remove('hidden');
-            document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
-
-            if (tab === 'appliances') {
-                loadAppliances();
-            } else if (tab === 'history') {
-                loadRecipes();
-            }
-        }
-
-        // Recipe Generation
-        async function generateRecipe() {
-            const ingredients = document.getElementById('ingredientsInput').value
-                .split(',')
-                .map(i => i.trim())
-                .filter(i => i.length > 0);
-
-            const applianceIds = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
-                .map(c => parseInt(c.value));
-
-            if (ingredients.length === 0) {
-                showError(t('no_ingredients'));
-                return;
-            }
-
-            if (applianceIds.length === 0) {
-                showError(t('no_appliances'));
-                return;
-            }
-
-            showLoading(true);
-            hideError();
-
+        // APPLIANCES
+        async function loadAppliances() {
             try {
+                const response = await fetch('/api/appliances');
+                if (!response.ok) throw new Error('Failed to load appliances');
+                state.appliances = await response.json();
+                updateApplianceDisplay();
+            } catch (error) {
+                console.error('Error loading appliances:', error);
+                showError('Failed to load appliances');
+            }
+        }
+
+        async function addCustomAppliance() {
+            try {
+                const name = document.getElementById('customApplianceName').value.trim();
+                const description = document.getElementById('customApplianceDesc').value.trim();
+                const errorDiv = document.getElementById('customApplianceError');
+
+                errorDiv.classList.add('hidden');
+
+                if (!name) {
+                    errorDiv.textContent = 'Please enter appliance name';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                const response = await fetch('/api/appliances', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        description: description || null
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to add appliance: ${response.status}`);
+                }
+
+                // Clear form
+                document.getElementById('customApplianceName').value = '';
+                document.getElementById('customApplianceDesc').value = '';
+
+                // Reload appliances list
+                await loadAppliances();
+            } catch (error) {
+                console.error('Error adding appliance:', error);
+                document.getElementById('customApplianceError').textContent = `Error: ${error.message}`;
+                document.getElementById('customApplianceError').classList.remove('hidden');
+            }
+        }
+
+        // RECIPE GENERATION
+        async function generateRecipe() {
+            try {
+                const ingredientsText = document.getElementById('ingredientsInput').value.trim();
+                const selectedAppliances = Array.from(document.querySelectorAll('.appliance-checkbox:checked')).map(el => el.value);
+
+                if (!ingredientsText || selectedAppliances.length === 0) {
+                    showError('Please enter ingredients and select at least one appliance');
+                    return;
+                }
+
+                const ingredients = ingredientsText.split(',').map(i => i.trim()).filter(i => i);
+                const appliance_ids = selectedAppliances.map(Number);
+
+                showLoading(true);
+                hideError();
+
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ingredients, appliance_ids: applianceIds })
+                    body: JSON.stringify({ ingredients, appliance_ids })
                 });
 
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
                 const recipe = await response.json();
-                displayRecipe(recipe);
-                state.recipes.unshift(recipe);
-                saveRecipes();
+                displayRecipe(recipe.content);
+                loadRecipes();
+                
             } catch (error) {
-                console.error('Error:', error);
-                showError(t('error') + ': ' + error.message);
+                console.error('generateRecipe error:', error);
+                showError(`Failed to generate recipe: ${error.message}`);
             } finally {
                 showLoading(false);
             }
         }
 
         function displayRecipe(recipe) {
-            const content = `
-                <div>
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="text-3xl font-bold mb-2">${recipe.content.title}</h3>
-                            <p class="text-lg" style="color: var(--text-secondary);">${recipe.content.description || ''}</p>
-                        </div>
-                    </div>
+            document.getElementById('recipeTitle').textContent = recipe.title || 'Recipe';
+            document.getElementById('recipeDesc').textContent = recipe.description || '';
+            document.getElementById('recipeTime').textContent = recipe.time_minutes || 0;
+            document.getElementById('recipeDifficulty').textContent = recipe.difficulty || 'medium';
+            document.getElementById('recipeServings').textContent = recipe.servings || 1;
 
-                    <div class="grid grid-cols-3 gap-4 mb-6">
-                        <div class="text-center p-3 rounded-lg" style="background-color: var(--bg-secondary);">
-                            <div class="text-2xl font-bold">${recipe.content.time_minutes}</div>
-                            <div style="color: var(--text-secondary);" data-i18n="time">Time</div>
-                        </div>
-                        <div class="text-center p-3 rounded-lg" style="background-color: var(--bg-secondary);">
-                            <div class="text-2xl font-bold">${recipe.content.difficulty}</div>
-                            <div style="color: var(--text-secondary);">Difficulty</div>
-                        </div>
-                        <div class="text-center p-3 rounded-lg" style="background-color: var(--bg-secondary);">
-                            <div class="text-2xl font-bold">${recipe.content.servings || 2}</div>
-                            <div style="color: var(--text-secondary);" data-i18n="servings">Servings</div>
-                        </div>
-                    </div>
-
-                    <div class="mb-6">
-                        <h4 class="text-xl font-bold mb-3" data-i18n="steps">Steps</h4>
-                        ${recipe.content.steps.map(step => `
-                            <div class="recipe-step">
-                                <div class="font-bold mb-2">Step ${step.step_number}: ${step.instruction}</div>
-                                <div style="color: var(--text-secondary); font-size: 0.875rem;">⏱️ ${step.duration_minutes} min</div>
-                            </div>
-                        `).join('')}
-                    </div>
-
-                    ${recipe.content.notes ? `
-                        <div style="background-color: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
-                            <h4 class="font-bold mb-2" data-i18n="notes">Notes</h4>
-                            <p>${recipe.content.notes}</p>
-                        </div>
-                    ` : ''}
-
-                    <div class="mt-6 flex gap-2 flex-wrap">
-                        ${recipe.appliances.map(app => `
-                            <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold" 
-                                  style="background-color: var(--bg-secondary);">
-                                ${app.name}
-                            </span>
-                        `).join('')}
-                    </div>
+            const stepsHtml = (recipe.steps || []).map((step) => `
+                <div class="p-3 card border rounded border-l-4" style="border-left-color: var(--accent);">
+                    <strong>Step ${step.step_number}:</strong> ${step.instruction}
+                    ${step.duration_minutes ? `<span class="text-sm text-muted"> (${step.duration_minutes} min)</span>` : ''}
                 </div>
-            `;
-            document.getElementById('recipeContent').innerHTML = content;
-            document.getElementById('recipeContainer').classList.remove('hidden');
-            updateTranslations();
+            `).join('');
+            document.getElementById('recipeSteps').innerHTML = stepsHtml;
+            document.getElementById('recipeNotes').textContent = recipe.notes || '';
+
+            document.getElementById('recipeResult').classList.remove('hidden');
         }
 
+        // HISTORY
         async function loadRecipes() {
             try {
                 const response = await fetch('/api/recipes');
-                if (response.ok) {
-                    const recipes = await response.json();
-                    const html = recipes.length > 0 ? recipes.map((r, i) => `
-                        <div class="card rounded-lg p-4 border-2 mb-4 cursor-pointer hover:shadow-lg transition" onclick="showRecipeDetail(${i})">
-                            <h3 class="font-bold text-lg">${r.content.title}</h3>
-                            <p style="color: var(--text-secondary);" class="text-sm">${r.ingredients.join(', ')}</p>
-                            <div class="mt-2 text-sm">
-                                <span class="inline-block px-2 py-1 rounded mr-2" style="background-color: var(--bg-secondary);">
-                                    ⏱️ ${r.content.time_minutes} min
-                                </span>
-                                <span class="inline-block px-2 py-1 rounded" style="background-color: var(--bg-secondary);">
-                                    📅 ${new Date(r.created_at).toLocaleDateString()}
-                                </span>
-                            </div>
-                        </div>
-                    `).join('') : `<p class="text-center" data-i18n="no_history">No recipes yet</p>`;
-                    document.getElementById('historyContent').innerHTML = html;
-                }
+                if (!response.ok) throw new Error('Failed to load recipes');
+                state.recipes = await response.json();
+                displayHistory();
             } catch (error) {
                 console.error('Error loading recipes:', error);
             }
         }
 
-        async function loadAppliances() {
-            try {
-                const response = await fetch('/api/appliances');
-                if (response.ok) {
-                    const appliances = await response.json();
-                    const emojis = ['🔬', '🍞', '🔥', '🌪️', '🔥', '🥤'];
-                    const html = appliances.map((a, i) => `
-                        <div class="card rounded-lg p-4 border-2">
-                            <h3 class="font-bold text-lg">${emojis[i % emojis.length]} ${a.name}</h3>
-                            <p style="color: var(--text-secondary);">${a.description || ''}</p>
-                        </div>
-                    `).join('');
-                    document.getElementById('appliancesContent').innerHTML = html;
-                }
-            } catch (error) {
-                console.error('Error loading appliances:', error);
+        function displayHistory() {
+            const container = document.getElementById('historyContainer');
+            if (!state.recipes.length) {
+                container.innerHTML = `<p class="text-muted">${translations[state.language].no_recipes}</p>`;
+                return;
             }
+
+            container.innerHTML = state.recipes.map((recipe) => {
+                const title = recipe.content?.title || 'Recipe';
+                const translatedTitle = translationService.getCacheKey(title, state.language);
+                const cachedTranslation = translationService.cache.get(translatedTitle);
+                
+                return `
+                    <div class="card border rounded p-4 shadow-sm">
+                        <h3 class="font-bold text-lg">${cachedTranslation || title}</h3>
+                        <p class="text-sm text-muted">
+                            <strong>${translations[state.language].ingredients}:</strong> ${(recipe.ingredients || []).join(', ')}
+                        </p>
+                        <p class="text-sm text-muted">
+                            ${recipe.content?.time_minutes || 0} min | ${recipe.content?.difficulty || 'medium'} | ${recipe.created_at ? new Date(recipe.created_at).toLocaleDateString() : ''}
+                        </p>
+                    </div>
+                `;
+            }).join('');
         }
 
+        // UI HELPERS
         function showLoading(show) {
-            document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
-            document.getElementById('recipeContainer').classList.toggle('hidden', show);
-        }
-
-        function showError(message) {
-            document.getElementById('errorText').textContent = message;
-            document.getElementById('errorMessage').classList.remove('hidden');
-        }
-
-        function hideError() {
-            document.getElementById('errorMessage').classList.add('hidden');
-        }
-
-        function saveRecipes() {
-            localStorage.setItem('recipes', JSON.stringify(state.recipes));
-        }
-
-        function loadLocalRecipes() {
-            const saved = localStorage.getItem('recipes');
-            if (saved) {
-                state.recipes = JSON.parse(saved);
-            }
-        }
-
-        function showRecipeDetail(index) {
-            if (state.recipes[index]) {
-                displayRecipe(state.recipes[index]);
-                switchTab('generator');
-            }
-        }
-
-        // Start
-        init();
-    </script>
-</body>
-</html>
-<body class="bg-gradient-to-br from-orange-50 to-yellow-50">
-    <div class="min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="bg-gradient-to-r from-orange-500 to-yellow-500 text-white shadow-lg">
-            <div class="max-w-4xl mx-auto px-4 py-6 flex justify-between items-center">
-                <div>
-                    <h1 class="text-4xl font-bold" data-i18n="title">🍳 DormChef</h1>
-                    <p class="text-orange-100 mt-2" data-i18n="subtitle">Generate personalized recipes with your ingredients and appliances</p>
-                </div>
-                <div class="flex gap-2">
-                    <button 
-                        id="languageToggle" 
-                        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition font-semibold text-lg"
-                        title="RU/EN"
-                    >
-                        🌍 EN
-                    </button>
-                    <button 
-                        id="themeToggle" 
-                        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg transition font-semibold text-lg"
-                        title="Toggle dark/light mode"
-                    >
-                        🌙
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
-            <!-- Tab Navigation -->
-            <div class="flex gap-4 mb-8 border-b-2 border-gray-200">
-                <button id="tabGenerator" class="tab-btn active px-6 py-3 font-semibold text-orange-600 border-b-4 border-orange-500">
-                    🍳 Generate
-                </button>
-                <button id="tabAppliances" class="tab-btn px-6 py-3 font-semibold text-gray-600 hover:text-gray-800">
-                    ⚙️ Appliances
-                </button>
-            </div>
-
-            <!-- Generator Section -->
-            <div id="generatorTab" class="tab-content">
-            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Create Your Recipe</h2>
-                
-                <!-- Ingredients Input -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold text-gray-700 mb-3">
-                        Ingredients (comma-separated)
-                    </label>
-                    <textarea 
-                        id="ingredientsInput" 
-                        class="w-full px-4 py-3 border-2 border-orange-200 rounded-lg focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-300"
-                        rows="4"
-                        placeholder="e.g., eggs, bread, butter, cheese"
-                    ></textarea>
-                    <p class="text-sm text-gray-500 mt-2">Enter ingredients you have available</p>
-                </div>
-
-                <!-- Appliance Selector -->
-                <div class="mb-6">
-                    <label class="block text-lg font-semibold text-gray-700 mb-3">
-                        Kitchen Appliances (select at least 1)
-                    </label>
-                    <div id="appliancesGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-                        <!-- Will be populated by JS -->
-                    </div>
-                    <p id="applianceError" class="text-red-600 text-sm mt-2 hidden">❌ Please select at least one appliance</p>
-                </div>
-
-                <!-- Generate Button -->
-                <button 
-                    id="generateBtn"
-                    class="w-full bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
-                >
-                    Generate Recipe ✨
-                </button>
-            </div>
-
-            <!-- Loading State -->
-            <div id="loadingContainer" class="hidden bg-white rounded-lg shadow-lg p-8 mb-8">
-                <div class="flex items-center justify-center">
-                    <div class="spin mr-4">
-                        <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                    </div>
-                    <p class="text-gray-600 font-semibold">Generating your recipe...</p>
-                </div>
-            </div>
-
-            <!-- Error Message -->
-            <div id="errorContainer" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-8">
-                <p class="text-red-700 font-semibold" id="errorMessage"></p>
-            </div>
-
-            <!-- Recipe Display -->
-            <div id="recipeContainer" class="hidden bg-white rounded-lg shadow-lg p-8 fade-in">
-                <div class="flex items-start justify-between mb-6">
-                    <div>
-                        <h2 id="recipeTitle" class="text-3xl font-bold text-gray-800"></h2>
-                        <p id="recipeDescription" class="text-gray-600 mt-2"></p>
-                    </div>
-                    <button 
-                        id="saveRecipeBtn"
-                        class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition"
-                    >
-                        💾 Saved
-                    </button>
-                </div>
-
-                <!-- Recipe Meta Info -->
-                <div class="grid grid-cols-3 gap-4 mb-6 pb-6 border-b-2 border-gray-200">
-                    <div class="text-center">
-                        <p class="text-gray-500 text-sm">Time</p>
-                        <p class="text-2xl font-bold text-orange-500" id="recipeTime"></p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-gray-500 text-sm">Difficulty</p>
-                        <p class="text-2xl font-bold text-orange-500" id="recipeDifficulty"></p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-gray-500 text-sm">Servings</p>
-                        <p class="text-2xl font-bold text-orange-500" id="recipeServings"></p>
-                    </div>
-                </div>
-
-                <!-- Used Ingredients -->
-                <div class="mb-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-3">Ingredients Used</h3>
-                    <div class="flex flex-wrap gap-2" id="ingredientsList"></div>
-                </div>
-
-                <!-- Recipe Steps -->
-                <div class="mb-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">Instructions</h3>
-                    <ol id="stepsList" class="list-none space-y-3"></ol>
-                </div>
-
-                <!-- Notes -->
-                <div id="notesContainer" class="hidden bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
-                    <p class="text-blue-700 text-sm">
-                        <span class="font-semibold">💡 Tips:</span>
-                        <span id="recipeNotes"></span>
-                    </p>
-                </div>
-            </div>
-
-            <!-- History Section -->
-            <div id="historySection" class="mt-12">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">📋 Recent Recipes</h2>
-                <div id="historyContainer" class="grid gap-4 md:grid-cols-2">
-                    <!-- Will be populated by JS -->
-                </div>
-                <p id="noHistoryMsg" class="text-gray-500 text-center py-8">No recipes yet. Generate your first one!</p>
-            </div>
-            </div><!-- End generatorTab -->
-
-            <!-- Appliances Management Section -->
-            <div id="appliancesTab" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow-lg p-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ Manage Appliances</h2>
-
-                    <!-- Add New Appliance Form -->
-                    <div class="mb-8 p-6 bg-orange-50 rounded-lg border-2 border-orange-200">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">➕ Add Custom Appliance</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Appliance Name</label>
-                                <input 
-                                    id="newApplianceName" 
-                                    type="text" 
-                                    placeholder="e.g., Coffee Maker, Slow Cooker"
-                                    class="w-full px-4 py-2 border-2 border-orange-200 rounded-lg focus:outline-none focus:border-orange-500"
-                                />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Description (optional)</label>
-                                <input 
-                                    id="newApplianceDesc" 
-                                    type="text" 
-                                    placeholder="e.g., Brewing coffee"
-                                    class="w-full px-4 py-2 border-2 border-orange-200 rounded-lg focus:outline-none focus:border-orange-500"
-                                />
-                            </div>
-                        </div>
-                        <button 
-                            id="addApplianceBtn"
-                            class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition"
-                        >
-                            ➕ Add Appliance
-                        </button>
-                    </div>
-
-                    <!-- Appliances List -->
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Your Appliances</h3>
-                    
-                    <!-- Built-in Appliances -->
-                    <div class="mb-8">
-                        <h4 class="text-md font-semibold text-gray-600 mb-3 flex items-center">
-                            <span class="bg-gray-300 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">🔒</span>
-                            Built-in Appliances (Default)
-                        </h4>
-                        <div class="grid gap-3" id="builtinAppliancesList"></div>
-                    </div>
-
-                    <!-- Custom Appliances -->
-                    <div>
-                        <h4 class="text-md font-semibold text-gray-600 mb-3 flex items-center">
-                            <span class="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">👤</span>
-                            Your Custom Appliances
-                        </h4>
-                        <div class="grid gap-3" id="customAppliancesList"></div>
-                        <p id="noCustomMsg" class="text-gray-500 text-center py-4">No custom appliances yet.</p>
-                    </div>
-                </div>
-            </div><!-- End appliancesTab -->
-        </main>
-
-        <!-- History Section (in generator tab) -->
-        <div style="display: none;">
-            <div id="historySection" class="mt-12">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">📋 Recent Recipes</h2>
-                <div id="historyContainer" class="grid gap-4 md:grid-cols-2">
-                    <!-- Will be populated by JS -->
-                </div>
-                <p id="noHistoryMsg" class="text-gray-500 text-center py-8">No recipes yet. Generate your first one!</p>
-            </div>
-            </div><!-- End generatorTab -->
-
-            <!-- Appliances Management Section -->
-            <div id="appliancesTab" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow-lg p-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">⚙️ Manage Appliances</h2>
-
-                    <!-- Add New Appliance Form -->
-                    <div class="mb-8 p-6 bg-orange-50 rounded-lg border-2 border-orange-200">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">➕ Add Custom Appliance</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Appliance Name</label>
-                                <input 
-                                    id="newApplianceName" 
-                                    type="text" 
-                                    placeholder="e.g., Coffee Maker, Slow Cooker"
-                                    class="w-full px-4 py-2 border-2 border-orange-200 rounded-lg focus:outline-none focus:border-orange-500"
-                                />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Description (optional)</label>
-                                <input 
-                                    id="newApplianceDesc" 
-                                    type="text" 
-                                    placeholder="e.g., Brewing coffee"
-                                    class="w-full px-4 py-2 border-2 border-orange-200 rounded-lg focus:outline-none focus:border-orange-500"
-                                />
-                            </div>
-                        </div>
-                        <button 
-                            id="addApplianceBtn"
-                            class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition"
-                        >
-                            ➕ Add Appliance
-                        </button>
-                    </div>
-
-                    <!-- Appliances List -->
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Your Appliances</h3>
-                    
-                    <!-- Built-in Appliances -->
-                    <div class="mb-8">
-                        <h4 class="text-md font-semibold text-gray-600 mb-3 flex items-center">
-                            <span class="bg-gray-300 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">🔒</span>
-                            Built-in Appliances (Default)
-                        </h4>
-                        <div class="grid gap-3" id="builtinAppliancesList"></div>
-                    </div>
-
-                    <!-- Custom Appliances -->
-                    <div>
-                        <h4 class="text-md font-semibold text-gray-600 mb-3 flex items-center">
-                            <span class="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs mr-2">👤</span>
-                            Your Custom Appliances
-                        </h4>
-                        <div class="grid gap-3" id="customAppliancesList"></div>
-                        <p id="noCustomMsg" class="text-gray-500 text-center py-4">No custom appliances yet.</p>
-                    </div>
-                </div>
-            </div><!-- End appliancesTab -->
-            </div>
-        </main>
-
-        <!-- Footer -->
-        <footer class="bg-gray-800 text-white mt-12">
-            <div class="max-w-4xl mx-auto px-4 py-6 text-center">
-                <p class="text-gray-400">🍳 DormChef v2.0 | Lab 9 Hackathon Project</p>
-            </div>
-        </footer>
-    </div>
-
-    <!-- Modal for Edit Appliance -->
-    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Edit Appliance</h3>
-            <input 
-                id="editApplianceName" 
-                type="text" 
-                placeholder="Appliance Name"
-                class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg mb-3 focus:outline-none focus:border-orange-500"
-            />
-            <textarea 
-                id="editApplianceDesc" 
-                placeholder="Description"
-                class="w-full px-4 py-2 border-2 border-gray-200 rounded-lg mb-4 focus:outline-none focus:border-orange-500"
-                rows="2"
-            ></textarea>
-            <div class="flex gap-2">
-                <button 
-                    id="editModalSave"
-                    class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition"
-                >
-                    Save
-                </button>
-                <button 
-                    id="editModalCancel"
-                    class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition"
-                >
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal for Delete Confirmation -->
-    <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Delete Appliance?</h3>
-            <p class="text-gray-600 mb-6">This action cannot be undone.</p>
-            <div class="flex gap-2">
-                <button 
-                    id="deleteModalConfirm"
-                    class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition"
-                >
-                    Delete
-                </button>
-                <button 
-                    id="deleteModalCancel"
-                    class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition"
-                >
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript -->
-    <script>
-        const API_BASE = window.location.origin;
-        let currentRecipeId = null;
-        let editingApplianceId = null;
-        let deletingApplianceId = null;
-        let allAppliances = [];
-        let isDarkMode = localStorage.getItem('dormchef-dark-mode') === 'true';
-
-        // DOM Elements - Generator
-        const ingredientsInput = document.getElementById('ingredientsInput');
-        const appliancesGrid = document.getElementById('appliancesGrid');
-        const applianceError = document.getElementById('applianceError');
-        const generateBtn = document.getElementById('generateBtn');
-        const loadingContainer = document.getElementById('loadingContainer');
-        const errorContainer = document.getElementById('errorContainer');
-        const errorMessage = document.getElementById('errorMessage');
-        const recipeContainer = document.getElementById('recipeContainer');
-        const historyContainer = document.getElementById('historyContainer');
-        const noHistoryMsg = document.getElementById('noHistoryMsg');
-        const themeToggle = document.getElementById('themeToggle');
-        const languageToggle = document.getElementById('languageToggle');
-        const selectedAppliances = new Set();
-
-        // DOM Elements - Appliances Management
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const newApplianceName = document.getElementById('newApplianceName');
-        const newApplianceDesc = document.getElementById('newApplianceDesc');
-        const addApplianceBtn = document.getElementById('addApplianceBtn');
-        const builtinAppliancesList = document.getElementById('builtinAppliancesList');
-        const customAppliancesList = document.getElementById('customAppliancesList');
-        const noCustomMsg = document.getElementById('noCustomMsg');
-        
-        // DOM Elements - Modals
-        const editModal = document.getElementById('editModal');
-        const editModalSave = document.getElementById('editModalSave');
-        const editModalCancel = document.getElementById('editModalCancel');
-        const editApplianceName = document.getElementById('editApplianceName');
-        const editApplianceDesc = document.getElementById('editApplianceDesc');
-        const deleteModal = document.getElementById('deleteModal');
-        const deleteModalConfirm = document.getElementById('deleteModalConfirm');
-        const deleteModalCancel = document.getElementById('deleteModalCancel');
-
-        // Event Listeners - Generator
-        generateBtn.addEventListener('click', generateRecipe);
-        document.getElementById('saveRecipeBtn').addEventListener('click', copyRecipe);
-        themeToggle.addEventListener('click', toggleTheme);
-        languageToggle.addEventListener('click', toggleLanguage);
-
-        // Event Listeners - Tabs
-        tabButtons.forEach(btn => {
-            btn.addEventListener('click', switchTab);
-        });
-
-        // ===== THEME MANAGEMENT =====
-
-        // Toggle Language
-        function toggleLanguage() {
-            const currentLang = getCurrentLanguage();
-            const newLang = currentLang === 'en' ? 'ru' : 'en';
-            setLanguage(newLang);
-            updateUILanguage();
-        }
-
-        // Update UI Language
-        function updateUILanguage() {
-            const currentLang = getCurrentLanguage();
-            languageToggle.textContent = currentLang === 'en' ? '🌍 RU' : '🌍 EN';
-            
-            // Update all elements with data-i18n attribute
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                el.textContent = t(key);
-            });
-
-            // Update input placeholders and labels
-            const ingredientsLabel = document.querySelector('label:has(~ textarea#ingredientsInput)');
-            if (ingredientsLabel) ingredientsLabel.textContent = t('ingredientsLabel');
-            document.getElementById('ingredientsInput').placeholder = t('ingredientsPlaceholder');
-
-            const appliancesLabel = Array.from(document.querySelectorAll('label')).find(l => l.textContent.includes('Kitchen Appliances') || l.textContent.includes('Кухонные'));
-            if (appliancesLabel) appliancesLabel.textContent = t('appliancesLabel');
-            
-            // Update button texts
-            generateBtn.textContent = t('generateBtn');
-            document.getElementById('saveRecipeBtn').textContent = t('saveRecipe');
-        }
-
-        // ===== THEME MANAGEMENT =====
-
-        // Toggle Dark/Light Mode
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            localStorage.setItem('dormchef-dark-mode', isDarkMode);
-            applyTheme();
-        }
-
-        // Apply Theme
-        function applyTheme() {
-            if (isDarkMode) {
-                document.documentElement.classList.add('dark-mode');
-                document.body.classList.add('dark-mode');
-                themeToggle.textContent = '☀️';
-                themeToggle.title = 'Switch to light mode';
+            const spinner = document.getElementById('loadingSpinner');
+            const btn = document.getElementById('generateBtn');
+            if (show) {
+                spinner.classList.remove('hidden');
+                btn.disabled = true;
             } else {
-                document.documentElement.classList.remove('dark-mode');
-                document.body.classList.remove('dark-mode');
-                themeToggle.textContent = '🌙';
-                themeToggle.title = 'Switch to dark mode';
+                spinner.classList.add('hidden');
+                btn.disabled = false;
             }
         }
 
-        // Event Listeners - Tabs
-        tabButtons.forEach(btn => {
-            btn.addEventListener('click', switchTab);
-        });
-
-        // Event Listeners - Appliances
-        addApplianceBtn.addEventListener('click', createAppliance);
-        editModalCancel.addEventListener('click', closeEditModal);
-        deleteModalCancel.addEventListener('click', closeDeleteModal);
-        editModalSave.addEventListener('click', saveAppliance);
-        deleteModalConfirm.addEventListener('click', deleteAppliance);
-
-        // Tab Switching
-        function switchTab(e) {
-            const tabName = e.target.id.replace('tab', '');
-            
-            tabButtons.forEach(btn => {
-                btn.classList.remove('active', 'text-orange-600', 'border-b-4', 'border-orange-500');
-                btn.classList.add('text-gray-600');
-            });
-            
-            tabContents.forEach(content => {
-                content.classList.add('hidden');
-            });
-            
-            e.target.classList.add('active', 'text-orange-600', 'border-b-4', 'border-orange-500');
-            e.target.classList.remove('text-gray-600');
-            
-            if (tabName === 'Generator') {
-                document.getElementById('generatorTab').classList.remove('hidden');
-            } else if (tabName === 'Appliances') {
-                document.getElementById('appliancesTab').classList.remove('hidden');
-                loadAppliances();
-            }
-        }
-
-        // ===== APPLIANCES MANAGEMENT =====
-
-        // Load All Appliances
-        async function loadAppliances() {
-            try {
-                const response = await fetch(`${API_BASE}/api/appliances`);
-                if (!response.ok) throw new Error('Failed to load appliances');
-                
-                allAppliances = await response.json();
-                renderAppliances();
-                updateApplianceDropdown();
-            } catch (error) {
-                console.error('Load appliances error:', error);
-            }
-        }
-
-        // Render Appliances in Settings Tab
-        function renderAppliances() {
-            const builtin = allAppliances.filter(a => a.is_default);
-            const custom = allAppliances.filter(a => !a.is_default);
-
-            // Built-in Appliances (read-only)
-            builtinAppliancesList.innerHTML = builtin
-                .map(a => `
-                    <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300 flex justify-between items-start">
-                        <div>
-                            <p class="font-semibold text-gray-800">${a.name}</p>
-                            ${a.description ? `<p class="text-sm text-gray-600 mt-1">${a.description}</p>` : ''}
-                        </div>
-                        <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-semibold">Default</span>
-                    </div>
-                `)
-                .join('');
-
-            // Custom Appliances (editable/deletable)
-            if (custom.length === 0) {
-                customAppliancesList.innerHTML = '';
-                noCustomMsg.classList.remove('hidden');
-            } else {
-                noCustomMsg.classList.add('hidden');
-                customAppliancesList.innerHTML = custom
-                    .map(a => `
-                        <div class="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500 flex justify-between items-start">
-                            <div>
-                                <p class="font-semibold text-gray-800">${a.name}</p>
-                                ${a.description ? `<p class="text-sm text-gray-600 mt-1">${a.description}</p>` : ''}
-                                <p class="text-xs text-gray-500 mt-2">Added ${new Date(a.created_at).toLocaleDateString()}</p>
-                            </div>
-                            <div class="flex gap-2">
-                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm" onclick="openEditModal(${a.id}, '${a.name}', '${a.description || ''}')">
-                                    ✏️ Edit
-                                </button>
-                                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" onclick="openDeleteModal(${a.id})">
-                                    🗑️ Delete
-                                </button>
-                            </div>
-                        </div>
-                    `)
-                    .join('');
-            }
-
-            // Update checkboxes in generator
-            updateApplianceCheckboxes();
-        }
-
-        // Update Appliance Checkboxes in Generator
-        function updateApplianceCheckboxes() {
-            appliancesGrid.innerHTML = allAppliances
-                .map(a => `
-                    <label class="flex items-center gap-2 p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-orange-500 cursor-pointer transition">
-                        <input 
-                            type="checkbox" 
-                            value="${a.id}" 
-                            class="appliance-checkbox w-5 h-5 accent-orange-500 cursor-pointer"
-                            onchange="toggleAppliance(${a.id}, this.checked)"
-                        />
-                        <span class="text-sm font-medium text-gray-700">${a.name}</span>
-                        ${a.is_default ? '<span class="text-xs bg-gray-200 px-2 py-0.5 rounded">default</span>' : '<span class="text-xs bg-orange-200 px-2 py-0.5 rounded">custom</span>'}
-                    </label>
-                `)
-                .join('');
-        }
-
-        // Toggle Appliance Selection
-        function toggleAppliance(id, checked) {
-            if (checked) {
-                selectedAppliances.add(id);
-            } else {
-                selectedAppliances.delete(id);
-            }
-            applianceError.classList.add('hidden');
-        }
-
-        // Create New Appliance
-        async function createAppliance() {
-            const name = newApplianceName.value.trim();
-            const description = newApplianceDesc.value.trim();
-
-            if (!name) {
-                alert('❌ Please enter an appliance name');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/api/appliances`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description }),
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || 'Failed to create appliance');
-                }
-
-                newApplianceName.value = '';
-                newApplianceDesc.value = '';
-                await loadAppliances();
-                alert('✅ Appliance added successfully!');
-            } catch (error) {
-                alert(`❌ Error: ${error.message}`);
-            }
-        }
-
-        // Open Edit Modal
-        function openEditModal(id, name, description) {
-            editingApplianceId = id;
-            editApplianceName.value = name;
-            editApplianceDesc.value = description;
-            editModal.classList.remove('hidden');
-        }
-
-        // Close Edit Modal
-        function closeEditModal() {
-            editModal.classList.add('hidden');
-            editingApplianceId = null;
-        }
-
-        // Save Updated Appliance
-        async function saveAppliance() {
-            const name = editApplianceName.value.trim();
-            const description = editApplianceDesc.value.trim();
-
-            if (!name) {
-                alert('❌ Please enter an appliance name');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/api/appliances/${editingApplianceId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, description }),
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || 'Failed to update appliance');
-                }
-
-                closeEditModal();
-                await loadAppliances();
-                alert('✅ Appliance updated successfully!');
-            } catch (error) {
-                alert(`❌ Error: ${error.message}`);
-            }
-        }
-
-        // Open Delete Modal
-        function openDeleteModal(id) {
-            deletingApplianceId = id;
-            deleteModal.classList.remove('hidden');
-        }
-
-        // Close Delete Modal
-        function closeDeleteModal() {
-            deleteModal.classList.add('hidden');
-            deletingApplianceId = null;
-        }
-
-        // Delete Appliance
-        async function deleteAppliance() {
-            try {
-                const response = await fetch(`${API_BASE}/api/appliances/${deletingApplianceId}`, {
-                    method: 'DELETE',
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || 'Failed to delete appliance');
-                }
-
-                closeDeleteModal();
-                await loadAppliances();
-                alert('✅ Appliance deleted successfully!');
-            } catch (error) {
-                alert(`❌ Error: ${error.message}`);
-            }
-        }
-
-        // ===== RECIPE GENERATION =====
-
-        // Generate Recipe
-        async function generateRecipe() {
-            const ingredients = ingredientsInput.value
-                .split(',')
-                .map(i => i.trim())
-                .filter(i => i.length > 0);
-            const appliance_ids = Array.from(selectedAppliances);
-
-            if (ingredients.length === 0) {
-                showError('Please enter at least one ingredient');
-                return;
-            }
-
-            if (appliance_ids.length === 0) {
-                applianceError.classList.remove('hidden');
-                showError('Please select at least one kitchen appliance');
-                return;
-            }
-
-            hideError();
-            applianceError.classList.add('hidden');
-            showLoading();
-            recipeContainer.classList.add('hidden');
-
-            try {
-                const response = await fetch(`${API_BASE}/api/generate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ingredients, appliance_ids }),
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.detail || 'Failed to generate recipe');
-                }
-
-                const data = await response.json();
-                displayRecipe(data);
-                currentRecipeId = data.id;
-                loadHistory();
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Display Recipe
-        function displayRecipe(recipe) {
-            const content = recipe.content;
-
-            document.getElementById('recipeTitle').textContent = content.title;
-            document.getElementById('recipeDescription').textContent = content.description || '';
-            document.getElementById('recipeTime').textContent = `${content.time_minutes} min`;
-            document.getElementById('recipeDifficulty').textContent = content.difficulty.charAt(0).toUpperCase() + content.difficulty.slice(1);
-            document.getElementById('recipeServings').textContent = content.servings || 1;
-
-            // Ingredients
-            const ingredientsList = document.getElementById('ingredientsList');
-            ingredientsList.innerHTML = recipe.ingredients
-                .map(ing => `<span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">${ing}</span>`)
-                .join('');
-
-            // Steps
-            const stepsList = document.getElementById('stepsList');
-            stepsList.innerHTML = content.steps
-                .map(step => `
-                    <li class="bg-gray-50 p-4 rounded-lg border-l-4 border-orange-500">
-                        <p class="font-semibold text-gray-800">Step ${step.step_number}</p>
-                        <p class="text-gray-700 mt-1">${step.instruction}</p>
-                        ${step.duration_minutes ? `<p class="text-sm text-gray-500 mt-2">⏱️ ${step.duration_minutes} min</p>` : ''}
-                    </li>
-                `)
-                .join('');
-
-            // Notes
-            if (content.notes) {
-                document.getElementById('recipeNotes').textContent = content.notes;
-                document.getElementById('notesContainer').classList.remove('hidden');
-            } else {
-                document.getElementById('notesContainer').classList.add('hidden');
-            }
-
-            recipeContainer.classList.remove('hidden');
-            recipeContainer.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Load Recipe History
-        async function loadHistory() {
-            try {
-                const response = await fetch(`${API_BASE}/api/recipes?limit=6`);
-                if (!response.ok) throw new Error('Failed to load history');
-
-                const recipes = await response.json();
-                displayHistory(recipes);
-            } catch (error) {
-                console.error('History error:', error);
-            }
-        }
-
-        // Display History
-        function displayHistory(recipes) {
-            if (recipes.length === 0) {
-                historyContainer.innerHTML = '';
-                noHistoryMsg.classList.remove('hidden');
-                return;
-            }
-
-            noHistoryMsg.classList.add('hidden');
-            historyContainer.innerHTML = recipes
-                .map(recipe => `
-                    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
-                        <h3 class="font-bold text-gray-800">${recipe.content.title}</h3>
-                        <div class="flex flex-wrap gap-1 mt-2 mb-2">
-                            ${recipe.appliances.map(a => `<span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">${a.name}</span>`).join('')}
-                        </div>
-                        <p class="text-sm text-gray-600">⏱️ ${recipe.content.time_minutes} min</p>
-                        <p class="text-xs text-gray-500 mt-1">${new Date(recipe.created_at).toLocaleString()}</p>
-                    </div>
-                `)
-                .join('');
-        }
-
-        // Helper Functions
         function showError(msg) {
-            errorMessage.textContent = msg;
-            errorContainer.classList.remove('hidden');
+            const errorDiv = document.getElementById('errorMsg');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = msg;
+            errorDiv.classList.remove('hidden');
         }
 
         function hideError() {
-            errorContainer.classList.add('hidden');
+            document.getElementById('errorMsg').classList.add('hidden');
         }
 
-        function showLoading() {
-            loadingContainer.classList.remove('hidden');
+        // TABS
+        function setupEventListeners() {
+            document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+            document.getElementById('langBtn').addEventListener('click', toggleLanguage);
+            document.getElementById('generateBtn').addEventListener('click', generateRecipe);
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
         }
 
-        function hideLoading() {
-            loadingContainer.classList.add('hidden');
-        }
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
 
-        function copyRecipe() {
-            alert('✅ Recipe saved to your history!');
-        }
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
-        // Initialize on page load
-        async function initializePage() {
-            applyTheme();
-            updateUILanguage();
-            await loadAppliances();
-            loadHistory();
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+            });
         }
-
-        initializePage();
     </script>
 </body>
 </html>
